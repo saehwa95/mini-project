@@ -9,6 +9,9 @@ const TextBox = ({
   border,
   width,
   height,
+  onChange,
+  onKeyUp,
+  onKeyPress,
 }) => {
   const styles = {
     bgColor,
@@ -17,17 +20,29 @@ const TextBox = ({
     border,
     width,
     height,
+    onChange,
+    onKeyUp,
+    onKeyPress,
   };
-  return <StInputBox {...styles}>{children}</StInputBox>;
+  return (
+    <StInputBox
+      {...styles}
+      onChange={onChange}
+      onKeyUp={onKeyUp}
+      onKeyPress={onKeyPress}
+    >
+      {children}
+    </StInputBox>
+  );
 };
 // props 정리, props의 타입모듈.
 TextBox.defaultProps = {
   bgColor: "#F5F5F5",
   color: "#000",
-  onclick: () => {},
-  width: "100px",
-  height: "100px",
   padding: "16px",
+  onChange: (e) => {},
+  onKeyUp: (e) => {},
+  onKeyPress: (e) => {},
 };
 
 const StInputBox = styled.textarea`
@@ -39,7 +54,9 @@ const StInputBox = styled.textarea`
   height: ${({ height }) => height};
   font-size: 18px;
   border: none;
+  border-radius: 5px;
   outline: none;
+  resize: none;
 `;
 
 export default TextBox;
