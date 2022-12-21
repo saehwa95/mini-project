@@ -1,16 +1,24 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
+import commentsSlice from "./commentSlice";
+
 const instance = axios.create({
-  baseURL: "http://localhost:3001",
-  headers: { "X-Custom-Header": "foobar" },
-  timeout: 10000,
+  baseURL: "http://43.201.27.229/",
+  headers: {
+    authorization: `Bearer ${localStorage.getItem("token")}`,
+  },
+  timeout: 5000,
 });
-const initialState = {
+
+const initial = {
   posts: [
     {
-      imageUrl: [],
+      postId: "",
       text: "",
-    },
+      created_at : "",
+      userId: "",
+      imagesUrl: [] 
+    }
   ],
   isloading: false,
   error: false,
@@ -18,11 +26,25 @@ const initialState = {
 
 //게시글 조회
 export const __getPosts = createAsyncThunk(
-  "GET_POSTS",
-  async (paylode, thunkAPI) => {
+  "postsSlice/getPosts",
+  async (payload, thunkAPI) => {
     try {
-      const getdata = await axios.get();
-      return getdata.data;
+      const {data} = await instance.get("/api/posts");
+      return thunkAPI.fulfillWithValue(data);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error);
+    }
+  }
+);
+
+//게시글 삭제
+export const __deletePosts = createAsyncThunk(
+  "DELETE_POSTS",
+  async (payload, thunkAPI) => {
+    try {
+      const response = await instance.delete(`/api/posts/${payload}`);
+      console.log(response.data.message);
+      return thunkAPI.fulfillWithValue(response.data);
     } catch (error) {
       console.log(error);
       return thunkAPI.rejectWithValue(error);
@@ -34,39 +56,15 @@ export const __getPosts = createAsyncThunk(
 export const __addPosts = createAsyncThunk(
   "ADD_POSTS",
   async (payload, thunkAPI) => {
-    //console.log(payload);
-    // for (let entries of payload.formData.keys()) {
-    //   console.log("keys in slice ", entries);
-    // }
-    // for (let entries of payload.formData.values()) {
-    //   console.log("keys in slice ", entries);
-    // }
-
-    // console.log("저장", payload);
     try {
-      //console.log("dddd");
-      const postdata = await instance.post(
-        "http://localhost:3001/posts",
-        payload.formData
-      );
-      return postdata.data;
+      const response = await instance.post("/api/posts", payload);
+      window.alert(response.data.message);
+      window.location.replace("/Home");
+      return thunkAPI.fulfillWithValue(response.data);
     } catch (error) {
       console.log(error);
-      return thunkAPI.rejectWithValue(error);
-    }
-  }
-);
-
-//게시글 삭제
-export const __deletePosts = createAsyncThunk(
-  "DELETE_POSTS",
-  async (payload, thunkAPI) => {
-    try {
-      const deletedata = await axios.delete();
-      return deletedata.data;
-    } catch (error) {
-      console.log(error);
-      return thunkAPI.rejectWithValue(error);
+      window.alert(error.response.data.errorMessage);
+      return thunkAPI.rejectWithValue(error.response.data.errorMessage);
     }
   }
 );
@@ -88,32 +86,36 @@ export const __UpdatePosts = createAsyncThunk(
 //리듀서
 export const postsSlice = createSlice({
   name: "posts",
-  initialState,
-  reducers: {},
+  initialState: initial,
+  reducers: { },
   extraReducers: {
     //get
-    [__getPosts.pending]: (state) => {
+    [__getPosts.pending]: (state, action) => {
+      console.log("now pending");
+      // console.log("pending ", state.data);
       state.isLoading = true;
     },
-    [__getPosts.fulfilled]: (state, action) => {
-      state.posts = action.payload;
+    [__getPosts.fulfilled]: (state, {payload}) => {
       state.isLoading = false;
+      console.log(state);
+      state.posts = [...payload.data];
+      console.log("fulfilled ", state.posts);
     },
     [__getPosts.rejected]: (state, action) => {
-      state.error = action.payload;
       state.isLoading = false;
+      state.error = true;
     },
     //post
     [__addPosts.pending]: (state) => {
       state.isLoading = true;
     },
     [__addPosts.fulfilled]: (state, action) => {
-      state.posts = action.payload;
       state.isLoading = false;
+      state.posts = action.payload;
     },
     [__addPosts.rejected]: (state, action) => {
-      state.error = action.payload;
       state.isLoading = false;
+      state.error = true;
     },
     //delete
     [__deletePosts.pending]: (state) => {
